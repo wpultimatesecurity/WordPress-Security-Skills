@@ -32,3 +32,14 @@ skill names without duplicates; the router is listed once, including in its own
 scenario. Choose one concrete failure mode and include both rejection behavior and
 preserved legitimate behavior in the rubric. State prerequisites rather than
 assuming a vulnerability is exploitable or assigning severity in advance.
+
+## Recorded runs
+
+Text-only spot checks: the agent answers the scenario query from the description, with
+and without the listed skills loaded; a reviewer grades the answer against
+`success_criteria`. No WordPress runtime is exercised, so these results cover review
+judgment, not executed exploitation or fix verification.
+
+| Date | Scenario | Agent / model | With skills | Without skills | Notes |
+| --- | --- | --- | --- | --- | --- |
+| 2026-09-29 | `security-auditing-code-review-severity-calibration` | Claude Code subagent / Claude Opus 5.5 | Pass (5/5 after rubric revision) | Fail (2/5 full, 2 partial; rated issue 2 High with an invented CVSS vector) | Rubric revised the same day: a host-dependent impact may stay `needs_validation`, and a clearly labeled conditional rating is acceptable. |
