@@ -33,8 +33,13 @@ fix it using the relevant skill (`nonces-csrf-protection`, `output-escaping`,
   a methodology question. Answer inline with the relevant parts of this skill; do not
   produce the full report or claim coverage beyond what was examined.
 - **Full review mode** — an explicit audit, pre-release security review, third-party
-  code assessment, or a requested findings report. Run every step below and use the
-  full [report template](references/report-template.md).
+  code assessment, or a requested findings report. Run every step below, follow the
+  [full audit workflow](references/full-audit-workflow.md) (coverage ledger, hunting,
+  independent validation), and use the full [report template](references/report-template.md).
+
+In either mode, run code only on a disposable local WordPress with dummy users and
+secrets; never probe a live or client site. A fact that source and the local stack
+cannot settle becomes `needs_validation`.
 
 If the request could mean either, ask one focused question before starting a full review.
 
@@ -70,13 +75,17 @@ If the request could mean either, ask one focused question before starting a ful
    unavailable values explicitly Unknown; never infer them. Use the full
    [report template](references/report-template.md) throughout the review.
 2. **Inventory entry points:** grep for `wp_ajax_`, `register_rest_route`, `admin_post_`,
-   `add_shortcode`, `$_GET`/`$_POST`/`$_REQUEST`/`$_FILES`, form handlers.
+   `add_shortcode`, `$_GET`/`$_POST`/`$_REQUEST`/`$_FILES`, form handlers. In full
+   review mode, record them as coverage units (entry point × boundary × attack class)
+   so the report states what was covered, blocked, deferred, or out of scope.
 3. **Check applicable controls on each path:** transport-appropriate authentication
    and CSRF protection, resource-level authorization, shape/type validation,
    sanitization, output escaping, and safe query construction.
 4. **Inventory sinks**, including safely guarded ones: database calls, output,
    filesystem operations, uploads, code execution, deserialization, redirects,
    and outbound requests. Follow the input and controls before labeling any hit.
+   Then hunt the classes a sink sweep misses: business logic, feature abuse,
+   second-order paths, and the "obvious things" in [attack classes](references/attack-classes.md).
 5. **Classify before rating:** give every candidate one verdict.
    - `confirmed` — complete reachable trace, boundary, and result; severity from the
      [severity anchors](references/severity-anchors.md).
@@ -120,6 +129,8 @@ and [`references/audit-checklist.md`](references/audit-checklist.md) for the ful
 | [WordPress security audit checklist](references/audit-checklist.md) | Performing the full manual audit pass across entry points, controls, and sinks. |
 | [Audit grep patterns](references/grep-patterns.md) | Expanding the entry-point and sink inventory with additional heuristic searches. |
 | [WordPress security review report template](references/report-template.md) | Recording review context before inventory and reporting evidence, classification, verification, and limitations. |
+| [WordPress attack classes](references/attack-classes.md) | Hunting access-control, business-logic, feature-abuse, second-order, wildcard, and obvious-exposure classes beyond the sink sweep. |
+| [Full audit workflow](references/full-audit-workflow.md) | Running full review mode: execution safety, coverage ledger, hunting waves, independent validation, profiles, budget, and re-audits. |
 | [Severity anchors](references/severity-anchors.md) | Assigning severity to a confirmed finding or checking that a rating matches demonstrated impact. |
 
 ## Common AI mistakes / anti-patterns
@@ -230,6 +241,9 @@ References: Relevant official API/security sources.
 - [ ] Review context records scope, immutable revision, reviewer/date, methods/versions,
   testing authorization, exclusions, and limitations; unavailable values remain Unknown.
 - [ ] All in-scope entry points inventoried; no claim extends beyond reviewed paths.
+- [ ] Full reviews report coverage (covered, blocked, deferred, out of scope); partial
+  or `quick` runs say so.
+- [ ] Runtime checks ran only on a disposable local WordPress with dummy data.
 - [ ] State-changing paths checked independently for applicable CSRF and authorization controls.
 - [ ] Each output checked for context-correct escaping.
 - [ ] Each custom query checked for `$wpdb->prepare()`.

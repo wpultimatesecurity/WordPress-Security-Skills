@@ -33,6 +33,12 @@ Work top-down. For each entry point, verify all four controls, then sweep the si
 - [ ] `unserialize()` not fed untrusted input (object injection).
 - [ ] No `extract()` on request data.
 
+## Beyond the sink sweep
+- [ ] Access control checked for the right capability on the right object across every
+  path to the same state change, including bulk, import, and export actions.
+- [ ] Business-logic, feature-abuse, second-order, and "obvious things" classes hunted
+  with [attack classes](attack-classes.md).
+
 ## Configuration / data exposure
 - [ ] Remote calls use `wp_remote_*`, not `file_get_contents`/cURL on URLs.
 - [ ] No hard-coded secrets/API keys/credentials.

@@ -1,0 +1,27 @@
+{
+  "name": "Full review finds an export feature leaking data across roles",
+  "skills": [
+    "security-auditing-code-review",
+    "rest-api-security",
+    "user-data-protection-privacy"
+  ],
+  "query": "Please do a full security review of our membership plugin before we submit it to wordpress.org and give us a findings report. Our scanner found nothing: every query uses $wpdb->prepare() and all output is escaped. Relevant pieces: a REST route GET /members/v1/export?format=csv&role=... whose permission_callback is current_user_can( 'read' ), which builds a CSV of user_email, display_name, and the _member_notes meta for every user with the requested role; an AJAX action pb_member_search registered for wp_ajax_ and wp_ajax_nopriv_ that returns a count of users whose _member_level meta matches a posted value; and a settings page saved with check_admin_referer() and current_user_can( 'manage_options' ).",
+  "expected_behavior": [
+    "Treat the request as full review mode: record review context with unavailable values explicitly Unknown, build a coverage ledger of entry points by boundary and attack class, and state that a clean scan does not prove safety.",
+    "Hunt beyond the sink sweep using access-control and feature-abuse classes, not only SQL and escaping checks.",
+    "Trace the export route: permission_callback current_user_can( 'read' ) admits every subscriber, and the role parameter lets them export emails and private notes of other users, including administrators; this crosses a subscriber-to-other-users boundary.",
+    "Report the export as a confirmed access-control and data-exposure finding naming the lower-trust principal (subscriber), bypassed control, affected users and fields, and result, with severity justified from the anchors and the open-registration condition recorded or marked Unknown.",
+    "Trace the nopriv search action as an existence or value oracle: an anonymous visitor can learn how many users hold each membership level; assess the demonstrated impact honestly and rate it low, or record it as needs_validation if whether the level data is sensitive is unknown.",
+    "Treat the settings handler as covered when nonce and manage_options are both verified on the same path, without inventing a finding.",
+    "Recommend concrete fixes: a capability such as list_users or a custom capability in the permission_callback, an allowlist for exportable fields, and removing the nopriv registration or restricting the search to authorized users.",
+    "Validate each candidate by trying to disprove it (look for filters or checks elsewhere) before confirming; run any runtime check only on a disposable local WordPress with dummy users.",
+    "Include a coverage summary with covered, blocked, deferred, and out-of-scope units, and keep needs_validation items without severity."
+  ],
+  "success_criteria": [
+    "The report confirms the export route as an access-control finding with the subscriber principal, other users' emails and notes as the affected resource, and a severity justified from the anchors rather than from the scanner result.",
+    "The nopriv search action is reported as an enumeration or oracle issue with honest low impact, or as needs_validation with the exact missing fact and no severity.",
+    "The settings handler is not reported as vulnerable.",
+    "Remediation includes a correct capability in permission_callback and a field allowlist for the export, and addresses the nopriv registration.",
+    "The report contains a coverage summary and states that the review does not certify the plugin as secure; no live-site probing is proposed."
+  ]
+}

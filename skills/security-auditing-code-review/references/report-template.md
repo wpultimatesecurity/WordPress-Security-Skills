@@ -96,6 +96,15 @@ Keep defense-in-depth advice without a demonstrated vulnerability separate. Stat
 the applicable context and expected benefit; do not inflate confirmed counts with
 optional controls or style changes. Write `None` if none are proposed.
 
+## Coverage
+
+For full reviews, summarize the coverage ledger from the
+[full audit workflow](full-audit-workflow.md): unit counts by state (`covered`,
+`candidate`, `blocked`, `deferred`, `out_of_scope`), the profile (`quick`, `standard`,
+`deep`) and any scope restriction, the most important uncovered surfaces, and the result
+of the last coverage critic pass. State whether prior reviews were used. A scoped or
+`quick` run is partial coverage; never imply that unreviewed units are safe.
+
 ## Verification performed
 
 Record methods, commands/tool versions, the environment and immutable revision,
