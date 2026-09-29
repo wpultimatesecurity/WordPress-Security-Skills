@@ -276,6 +276,49 @@ $bold = preg_replace_callback(
 );
 ```
 
+### Mistake 7 - CI that hands release secrets to untrusted code
+
+```yaml
+# ❌ Insecure: pull_request_target runs with repository secrets and checks out
+# the fork's code, so a pull request can read SVN_PASSWORD. Actions pinned to a
+# moving tag can also change underneath the workflow.
+on: pull_request_target
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: some-org/deploy-action@main
+        env:
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+```
+
+```yaml
+# ✅ Secure: untrusted PRs run without secrets; deploys run only on tags from
+# the main repository, with least-privilege tokens and SHA-pinned actions.
+on:
+  push:
+    tags: [ 'v*' ]
+permissions:
+  contents: read
+jobs:
+  deploy:
+    if: github.repository == 'my-org/my-plugin'
+    runs-on: ubuntu-latest
+    environment: wordpress-org
+    steps:
+      - uses: actions/checkout@<full-commit-sha> # v4.x
+      - uses: some-org/deploy-action@<full-commit-sha>
+        env:
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+```
+
+Also check custom update servers: updates must come over HTTPS from an endpoint you
+control, with the package verified (signature or checksum from a trusted channel)
+before install, and the release zip built from the tagged commit.
+
 ## Correct code examples
 
 A complete reference module covering core-handle-first enqueuing, pinned CDN
@@ -303,6 +346,9 @@ situation-to-practice lookup table is in
 - [ ] Shipped code contains no `auto_update_plugin` / `auto_update_theme` / `AUTOMATIC_UPDATER_DISABLED` blockers.
 - [ ] PHP and WordPress minimums are enforced with `version_compare()` before the plugin loads.
 - [ ] Pasted snippets were rewritten against current APIs before merging.
+- [ ] CI never runs untrusted pull-request code with secrets (`pull_request_target` + PR checkout, or `workflow_run` on fork artifacts).
+- [ ] Third-party GitHub Actions are pinned to full commit SHAs; workflow `permissions` are least-privilege; deploy secrets live in a protected environment.
+- [ ] Custom update endpoints use HTTPS and verify the package before install; release zips are built from the tagged commit.
 
 ## Official references
 

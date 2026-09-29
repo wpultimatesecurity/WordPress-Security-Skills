@@ -131,6 +131,7 @@ and [`references/audit-checklist.md`](references/audit-checklist.md) for the ful
 | [WordPress security review report template](references/report-template.md) | Recording review context before inventory and reporting evidence, classification, verification, and limitations. |
 | [WordPress attack classes](references/attack-classes.md) | Hunting access-control, business-logic, feature-abuse, second-order, wildcard, and obvious-exposure classes beyond the sink sweep. |
 | [Full audit workflow](references/full-audit-workflow.md) | Running full review mode: execution safety, coverage ledger, hunting waves, independent validation, profiles, budget, and re-audits. |
+| [Resource exhaustion](references/resource-exhaustion.md) | Reviewing public or low-role paths that do expensive work, store data, schedule jobs, or spend paid API quota. |
 | [Severity anchors](references/severity-anchors.md) | Assigning severity to a confirmed finding or checking that a rating matches demonstrated impact. |
 
 ## Common AI mistakes / anti-patterns

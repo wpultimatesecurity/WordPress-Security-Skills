@@ -78,6 +78,12 @@ Legitimate features used against the site:
 - **Chains:** connect confirmed pieces only. A leaked nonce plus a handler that checks
   only that nonce is a finding; a leaked nonce alone usually is not.
 
+## Resource exhaustion
+
+Unbounded queries, per-request option or transient growth, cron floods, and anonymous
+paths that spend paid API quota. Use [resource exhaustion](resource-exhaustion.md) for
+the classes, the finding bar, and local-only validation rules.
+
 ## Wildcard
 
 No assigned category. Read the code that looks boring or disconnected from security:

@@ -174,6 +174,26 @@ echo wp_kses( $caption, $allowed );
 Related: see the `input-sanitization-validation` skill for validating redirect URLs on
 input and the `filesystem-security` skill for path escaping.
 
+### Mistake 9 — Escaping in PHP, then re-injecting in JavaScript
+
+```js
+// ❌ Insecure: PHP passed the value safely through wp_localize_script or
+// wp_json_encode, but the script decodes it into markup.
+const name = myPluginData.displayName;
+document.querySelector( '#greeting' ).innerHTML = 'Hello ' + name;
+jQuery( '#title' ).html( myPluginData.title );
+```
+
+```js
+// ✅ Secure: insert untrusted values as text in the DOM.
+document.querySelector( '#greeting' ).textContent = 'Hello ' + myPluginData.displayName;
+jQuery( '#title' ).text( myPluginData.title );
+```
+
+Server-side escaping protects the transfer into the page, not what client code does next.
+Review DOM sinks (`innerHTML`, `outerHTML`, `insertAdjacentHTML`, `document.write`,
+jQuery `.html()`/`.append()` with strings, `location` assignments) in plugin scripts.
+
 ## Correct code examples
 
 A complete context → function reference (with `esc_url` vs `esc_url_raw`, the i18n
@@ -204,6 +224,7 @@ variants, and `wp_kses` allowlist usage) is in
 - [ ] Intentional HTML uses `wp_kses_post` / `wp_kses` with an allowlist.
 - [ ] Translatable strings use the `esc_*` i18n variants.
 - [ ] No escaped/unescaped string concatenation that defeats escaping.
+- [ ] Client-side code inserts localized or fetched values with `textContent` / `.text()`, not `innerHTML` / `.html()`; URLs assigned to `location` or `href` are validated.
 
 ## Official references
 

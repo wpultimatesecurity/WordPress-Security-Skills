@@ -174,6 +174,34 @@ apiFetch( { path: 'my-plugin/v1/data' } )
   .then( data => { /* ... */ } );
 ```
 
+### Mistake 6 — Trusting `postMessage` and raw HTML in editor code
+
+```js
+// ❌ Insecure: any window (an embedded preview, an ad iframe, an opener) can
+// post a message, and its HTML is rendered unsanitized in the editor.
+window.addEventListener( 'message', ( event ) => {
+  setAttributes( { html: event.data.html } );
+} );
+// ...
+<RawHTML>{ attributes.html }</RawHTML>
+```
+
+```js
+// ✅ Secure: check origin and shape, and never render untrusted markup raw.
+window.addEventListener( 'message', ( event ) => {
+  if ( event.origin !== window.location.origin || typeof event.data?.text !== 'string' ) {
+    return;
+  }
+  setAttributes( { text: event.data.text } );
+} );
+// Render as text (React escapes it), and sanitize server-side on render.
+```
+
+Treat `RawHTML`, `dangerouslySetInnerHTML`, `innerHTML`, and jQuery `.html()` as sinks
+in admin and editor JavaScript. Deep-merging settings from URL parameters, storage, or
+messages into objects (`Object.assign`, `lodash.merge`) can pollute prototypes; reject
+`__proto__`, `constructor`, and `prototype` keys.
+
 ## Correct code examples
 
 A secure dynamic block with `render_callback` and a REST field with permission checks
@@ -190,6 +218,9 @@ is in [`references/secure-block-editor.php`](references/secure-block-editor.php)
 - [ ] `ServerSideRender` blocks enforce the same permissions as the front-end render.
 - [ ] Editor JS uses `apiFetch` (or sends `X-WP-Nonce`) for same-site REST calls.
 - [ ] No secrets are returned to the block editor for low-privilege users.
+- [ ] `message` listeners verify `event.origin` against an allowlist and validate the payload shape.
+- [ ] `RawHTML` / `dangerouslySetInnerHTML` / `innerHTML` never receive user- or message-controlled markup.
+- [ ] Settings deep-merged from URLs, storage, or messages reject `__proto__`, `constructor`, and `prototype` keys.
 
 ## Official references
 

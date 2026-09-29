@@ -288,6 +288,29 @@ wp_safe_redirect( wp_validate_redirect( $target, home_url( '/' ) ) );
 exit;
 ```
 
+### Mistake 7 — Enforcing a second factor on only one login path
+
+```php
+// ❌ Insecure: the second factor is checked only when the wp-login.php form is
+// submitted. XML-RPC, REST with application passwords, and the password-reset
+// auto-login all reach an authenticated session without it.
+add_action( 'login_form_login', 'my_plugin_require_otp' );
+```
+
+```php
+// ✅ Secure: enforce at authentication, and decide explicitly about
+// non-interactive credentials.
+add_filter( 'authenticate', 'my_plugin_require_second_factor', 50, 3 );
+add_filter( 'wp_is_application_passwords_available_for_user', 'my_plugin_app_passwords_policy', 10, 2 );
+add_filter( 'xmlrpc_enabled', '__return_false' ); // Only if the site does not need XML-RPC.
+```
+
+List every path that yields an authenticated user (login form, XML-RPC, REST
+application passwords, password reset, magic links, social login, "remember this
+device" tokens, account recovery) and confirm each one applies the same factor or is
+deliberately exempted. Recovery and reset flows must not skip the second factor or
+let an attacker disable it without re-authentication.
+
 ## Correct code examples
 
 A complete commented module — throttle (`wp_authenticate_user` +
@@ -313,6 +336,11 @@ and [`references/cheatsheet.md`](references/cheatsheet.md) (goal → API table).
 - [ ] Every `redirect_to` / post-login target passes `wp_validate_redirect()` before `wp_safe_redirect()`.
 - [ ] Custom login forms include a nonce (`wp_nonce_field` + `check_admin_referer`).
 - [ ] Post-login privileged actions check `current_user_can()` / `user_can()`, not just `is_user_logged_in()`.
+- [ ] Every authentication path (form, XML-RPC, application passwords, reset, magic link, social login, remembered device, recovery) enforces the same second factor or is deliberately exempted.
+- [ ] Disabling or resetting a second factor requires re-authentication and notifies the account owner.
+- [ ] Application passwords are revoked with other sessions on compromise or role change, and custom API tokens are scoped, hashed at rest, and expire.
+- [ ] Pages that vary by login state send `nocache_headers()` or cache-varying headers so a page cache never serves one user's content to another.
+- [ ] OAuth/OIDC flows validate `state` (and PKCE where supported) and an exact redirect URI allowlist.
 
 ## Official references
 

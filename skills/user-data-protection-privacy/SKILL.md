@@ -196,6 +196,41 @@ data. Verify unknown, denied, granted, and withdrawn states in browser network a
 storage tools, including warm shared caches. This is an implementation pattern, not
 a guarantee of GDPR/CCPA or other legal compliance.
 
+### Mistake 7 — Erasing the primary record but not its copies
+
+```php
+// ❌ Incomplete: the eraser clears the plugin table, but copies survive in a
+// transient cache, a search index table, a public export file, and debug logs.
+function my_plugin_eraser( $email, $page = 1 ) {
+    global $wpdb;
+    $wpdb->delete( $wpdb->prefix . 'my_plugin_leads', array( 'email' => $email ) );
+    return array( 'items_removed' => true, 'items_retained' => false, 'messages' => array(), 'done' => true );
+}
+```
+
+```php
+// ✅ Secure: erase every derived copy the plugin owns, and report honestly.
+function my_plugin_eraser( $email, $page = 1 ) {
+    global $wpdb;
+    $ids = $wpdb->get_col( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}my_plugin_leads WHERE email = %s", $email ) );
+    foreach ( $ids as $id ) {
+        delete_transient( 'my_plugin_lead_' . (int) $id );
+        $wpdb->delete( $wpdb->prefix . 'my_plugin_search_index', array( 'lead_id' => (int) $id ) );
+    }
+    $removed = (bool) $wpdb->delete( $wpdb->prefix . 'my_plugin_leads', array( 'email' => $email ) );
+    return array(
+        'items_removed'  => $removed,
+        'items_retained' => false,
+        'messages'       => array(),
+        'done'           => true,
+    );
+}
+```
+
+Inventory derived data too: caches and transients, search or analytics tables, export
+files, logs, and records restored from backups or imports. Also clean up on
+`delete_user`, and never write export files to a public, guessable `uploads/` path.
+
 ## Correct code examples
 
 A complete exporter + eraser registration and a privacy-policy-content example are in
@@ -221,6 +256,9 @@ helpers too.
 - [ ] Cookies and trackers are disclosed in the suggested privacy policy content.
 - [ ] PII not leaked in REST/AJAX responses to under-privileged users.
 - [ ] No PII or secrets written to logs.
+- [ ] Erasers and user deletion also remove derived copies: caches/transients, search or analytics tables, generated export files, and logs.
+- [ ] Generated export or backup files are not stored at public, guessable URLs and are deleted after download or expiry.
+- [ ] Import and restore paths re-apply current ownership and capability checks instead of trusting stored author or user IDs.
 
 ## Official references
 

@@ -168,6 +168,30 @@ if ( current_user_can( 'manage_network' ) ) {
 }
 ```
 
+### Mistake 6 — Per-site data in a network-wide cache or option
+
+```php
+// ❌ Insecure: site_transient and a global cache group are shared by every
+// site, so site A's private member list is served to site B's visitors.
+$members = get_site_transient( 'my_plugin_members' );
+if ( false === $members ) {
+    $members = my_plugin_query_members();
+    set_site_transient( 'my_plugin_members', $members, HOUR_IN_SECONDS );
+}
+```
+
+```php
+// ✅ Secure: per-site storage (or a key that includes the blog ID).
+$members = get_transient( 'my_plugin_members' );
+if ( false === $members ) {
+    $members = my_plugin_query_members();
+    set_transient( 'my_plugin_members', $members, HOUR_IN_SECONDS );
+}
+```
+
+Also check `wp_cache_add_global_groups()` calls and custom tables without a
+`blog_id` column: shared storage must never hold per-site private data.
+
 ## Correct code examples
 
 A complete network-safe routine that validates a blog id, switches context, and restores
@@ -183,6 +207,8 @@ it is in [`references/secure-multisite-operations.php`](references/secure-multis
 - [ ] Capabilities are re-checked after switching sites if the action is privileged.
 - [ ] Per-site data is not leaked into another site's context.
 - [ ] `is_super_admin()` is used only where the super-admin list is the correct gate.
+- [ ] Per-site data never goes into `*_site_transient`, `*_site_option`, global cache groups, or shared tables without a blog ID in the key.
+- [ ] Users removed from a site lose access to that site's REST, AJAX, and export paths (`is_user_member_of_blog()` rechecked, not cached).
 
 ## Official references
 
