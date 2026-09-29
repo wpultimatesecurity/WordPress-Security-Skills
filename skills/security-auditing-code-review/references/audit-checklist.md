@@ -45,8 +45,11 @@ Work top-down. For each entry point, verify all four controls, then sweep the si
 - [ ] Each confirmed finding includes file:line, category, evidence/data flow, exploit
   prerequisites, impact, concrete remediation, verification, and official references.
 - [ ] Severity follows demonstrated impact and reachability; only confirmed vulnerabilities
-  enter totals. Scanner hits/incomplete traces are unverified leads; optional controls
-  without demonstrated vulnerabilities are separate hardening recommendations.
+  enter totals, rated with the [severity anchors](severity-anchors.md). Scanner
+  hits/incomplete traces are `needs_validation` with an exact blocker and validation
+  plan and no severity; disproved candidates are `rejected` with the governing control;
+  optional controls without demonstrated vulnerabilities are separate hardening
+  recommendations.
 - [ ] Executed verification and actual results are separate from proposed checks; fixes
   and alternate in-scope paths are re-verified or explicitly marked unverified.
 - [ ] Secrets/PII are redacted; residual limitations and excluded paths are explicit.

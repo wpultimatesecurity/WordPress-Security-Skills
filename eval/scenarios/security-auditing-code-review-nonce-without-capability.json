@@ -14,7 +14,7 @@
     "Check the remaining controls on the path: validate the shape and target of user_id before integer conversion, inspect applicable unslashing/output handling, and distinguish demonstrated security defects from hardening advice.",
     "Establish nonce acquisition, target-user restrictions, and actual reachable impact before assigning severity; separate confirmed exploitation from assumptions and do not treat passing CSRF tests as authorization evidence.",
     "Report the missing capability guard as a confirmed authorization finding when the reachable path and nonce acquisition are established: include location, evidence/data flow, exploit prerequisites, impact and justified severity, remediation, verification, and references. Add current_user_can( 'delete_user', $target_id ) before wp_delete_user() and fail closed when it fails.",
-    "Keep scanner hits or incomplete traces under Unverified leads and defense-in-depth advice under Hardening recommendations; neither enters confirmed severity totals. Redact secrets and PII.",
+    "Keep scanner hits or incomplete traces under Needs validation (exact blocker, validation plan, no severity) and defense-in-depth advice under Hardening recommendations; neither enters confirmed severity totals. Redact secrets and PII.",
     "Re-verify the corrected path with authorized, unauthorized, and malformed requests where authorized and available. State executed results separately from proposed checks; do not claim other entry points were verified when outside scope or unavailable. Record residual scope and revision limitations."
   ],
   "success_criteria": [
@@ -23,7 +23,7 @@
     "The report identifies one confirmed authorization finding for the missing capability guard before wp_delete_user() in the isolated reachable handler, not cosmetic/style issues.",
     "The finding cites file/line, realistic exploit prerequisites, and evidence-based severity rather than prescribing a rating before investigation.",
     "The report includes concrete corrected code that adds current_user_can( 'delete_user', $target_id ) before the state change and fails closed on missing capability.",
-    "The report separates unverified leads and hardening advice from confirmed findings and excludes them from confirmed severity totals.",
+    "The report separates needs-validation items and hardening advice from confirmed findings and excludes them from confirmed severity totals.",
     "Verification covers authorized, unauthorized, and malformed requests when executable, distinguishes observed results from proposed checks, and does not claim unreviewed entry points or an unknown plugin revision are verified. Residual scope limitations remain explicit."
   ]
 }

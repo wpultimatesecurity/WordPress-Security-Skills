@@ -27,6 +27,17 @@ This skill is the audit counterpart to the secure-coding skills. When you find a
 fix it using the relevant skill (`nonces-csrf-protection`, `output-escaping`,
 `sql-injection-prevention`, etc.).
 
+## Operating modes
+
+- **Guidance mode** — a focused question, one handler, a triage of a single report, or
+  a methodology question. Answer inline with the relevant parts of this skill; do not
+  produce the full report or claim coverage beyond what was examined.
+- **Full review mode** — an explicit audit, pre-release security review, third-party
+  code assessment, or a requested findings report. Run every step below and use the
+  full [report template](references/report-template.md).
+
+If the request could mean either, ask one focused question before starting a full review.
+
 ## Core principles (and why they matter)
 
 1. **Follow the data, not the file order.** Trace untrusted input from its entry point
@@ -38,11 +49,18 @@ fix it using the relevant skill (`nonces-csrf-protection`, `output-escaping`,
 3. **Trace controls, not proximity.** A nearby nonce, capability check, escaper, or
    `prepare()` call does not establish protection. Verify it governs the reachable
    operation; absence from the same line/file does not establish a vulnerability.
-4. **Confirm exploitability, then rate severity.** Distinguish a real, reachable issue
-   from a theoretical one. Rate by impact × reachability (auth required? privilege level?).
-5. **Report with a concrete fix.** Each finding = location, what's wrong, why it matters,
+4. **Require a boundary and a result.** A confirmed finding names the lower-trust
+   principal (anonymous visitor, subscriber, contributor, author, editor, shop manager),
+   the input or action it controls, the control that should stop it, the boundary
+   crossed, the affected user or resource, and the concrete result. If any part is
+   missing, it is not confirmed.
+5. **Separate certainty from priority.** Only confirmed findings receive severity, rated
+   from demonstrated impact and reachability with the
+   [severity anchors](references/severity-anchors.md). A blocked hypothesis is
+   `needs_validation`, not a low-severity finding.
+6. **Report with a concrete fix.** Each finding = location, what's wrong, why it matters,
    and the corrected code. A finding without a fix is half-done.
-6. **Don't trust comments or names.** Verify what the code does, not what it claims.
+7. **Don't trust comments or names.** Verify what the code does, not what it claims.
 
 ## Step-by-step implementation
 
@@ -59,9 +77,17 @@ fix it using the relevant skill (`nonces-csrf-protection`, `output-escaping`,
 4. **Inventory sinks**, including safely guarded ones: database calls, output,
    filesystem operations, uploads, code execution, deserialization, redirects,
    and outbound requests. Follow the input and controls before labeling any hit.
-5. **Classify before rating:** confirmed vulnerabilities alone receive severity
-   counts based on impact and reachability. Put scanner hits and incomplete traces
-   under Unverified leads, and defense-in-depth advice under Hardening recommendations.
+5. **Classify before rating:** give every candidate one verdict.
+   - `confirmed` — complete reachable trace, boundary, and result; severity from the
+     [severity anchors](references/severity-anchors.md).
+   - `needs_validation` — a source-grounded hypothesis blocked by one exact missing
+     fact (host/WAF config, a filter added elsewhere, a role customization). Record the
+     blocker and a safe validation plan; assign **no** severity. Scanner hits and
+     incomplete traces go here.
+   - `rejected` — disproved by a control that governs the path; record the control so
+     the candidate is not re-reported.
+
+   Keep defense-in-depth advice under Hardening recommendations, outside all verdicts.
 6. **Report:** evidence/data flow, exploit prerequisites, impact, concrete remediation,
    verification, and references. Redact secrets/PII. Do not invent CVSS/CWE values,
    remediation hours, response promises, or an overall secure score.
@@ -94,6 +120,7 @@ and [`references/audit-checklist.md`](references/audit-checklist.md) for the ful
 | [WordPress security audit checklist](references/audit-checklist.md) | Performing the full manual audit pass across entry points, controls, and sinks. |
 | [Audit grep patterns](references/grep-patterns.md) | Expanding the entry-point and sink inventory with additional heuristic searches. |
 | [WordPress security review report template](references/report-template.md) | Recording review context before inventory and reporting evidence, classification, verification, and limitations. |
+| [Severity anchors](references/severity-anchors.md) | Assigning severity to a confirmed finding or checking that a rating matches demonstrated impact. |
 
 ## Common AI mistakes / anti-patterns
 
@@ -129,6 +156,8 @@ Sanitize-on-input and escape-on-output are separate; check both ends.
 
 Inflated severity destroys signal. Rate by impact × reachability: an unauthenticated RCE
 is Critical; a self-XSS reachable only by an admin editing their own profile is Low/Info.
+Apply the [severity anchors](references/severity-anchors.md): overall severity never
+exceeds the demonstrated impact.
 
 ### Mistake 5 — Reporting the problem without the fix
 
@@ -137,6 +166,48 @@ is Critical; a self-XSS reachable only by an admin editing their own profile is 
 ✅ "Line 42: $name echoed unescaped into HTML (stored XSS, High).
     Fix: echo esc_html( $name );"
 ```
+
+### Mistake 6 — Reporting a principal's own authority as a vulnerability
+
+```php
+// Reviewer: "Stored XSS — post content is saved without wp_kses_post()."
+// But only users with unfiltered_html (administrators/editors on single site) reach it:
+if ( current_user_can( 'unfiltered_html' ) ) {
+	update_post_meta( $post_id, '_custom_html', wp_unslash( $_POST['custom_html'] ) );
+}
+```
+
+Raw HTML from a principal WordPress already trusts with `unfiltered_html` crosses no
+boundary. Report it only if a lower-trust principal (a contributor, or a multisite site
+admin without `unfiltered_html`) can reach the same write, or if the result affects
+someone the writer could not already affect.
+
+### Mistake 7 — Guessing the deployment
+
+```text
+❌ "Exploitable: the site has no WAF."   ❌ "Not exploitable: hosts block PHP in uploads."
+✅ needs_validation — blocker: whether uploads/ executes .phtml on the target server.
+   Validation plan: owner confirms the web-server handler for uploads/, or reproduce
+   on a disposable local stack with the recorded server config.
+```
+
+Host rules, WAF/CDN behavior, `wp-config.php` constants such as `DISALLOW_FILE_EDIT`,
+and role customizations are real controls. If the decision depends on one that is not
+in the reviewed source, do not assume it present or absent; record `needs_validation`
+with the exact missing fact.
+
+### Mistake 8 — Checklist deviations presented as findings
+
+```text
+❌ "[Medium] Plugin directory lacks index.php silence file."
+❌ "[Low] needs_validation: possible SSRF if the host allows internal requests."
+✅ Hardening: add index.php (no reachable disclosure demonstrated).
+✅ needs_validation (no severity): an editor-set webhook URL reaches wp_remote_get();
+   blocker: whether internal hosts are reachable from the target server.
+```
+
+A missing best practice with no affected principal or resource is a hardening note,
+not a finding. A `needs_validation` item never carries severity.
 
 ## Correct code examples
 
@@ -164,7 +235,12 @@ References: Relevant official API/security sources.
 - [ ] Each custom query checked for `$wpdb->prepare()`.
 - [ ] File/path operations checked for allowlisting and traversal.
 - [ ] Dangerous sink hits traced before classifying them as vulnerabilities.
-- [ ] Confirmed findings alone enter severity totals; unverified leads and hardening stay separate.
+- [ ] Each confirmed finding names the lower-trust principal, input, bypassed control,
+  crossed boundary, affected resource, and concrete result.
+- [ ] Every candidate has one verdict: `confirmed`, `needs_validation` (exact blocker and
+  validation plan), or `rejected` (the governing control recorded).
+- [ ] Only confirmed findings carry severity, rated with the severity anchors and never
+  above demonstrated impact; `needs_validation` items and hardening stay outside totals.
 - [ ] Each finding records location, evidence/data flow, exploit prerequisites, impact,
   concrete remediation, verification, and references.
 - [ ] Executed checks and results distinguished from proposed checks and unverified fixes.

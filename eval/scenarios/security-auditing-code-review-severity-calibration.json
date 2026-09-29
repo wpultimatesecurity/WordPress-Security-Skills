@@ -1,0 +1,25 @@
+{
+  "name": "Severity calibration and needs-validation discipline in a plugin audit",
+  "skills": [
+    "security-auditing-code-review"
+  ],
+  "query": "Our automated scanner flagged two 'High' issues in our custom page-builder plugin and the client wants a findings report with severities. Issue 1: the 'Custom HTML' block saves raw HTML to post meta without kses; the save handler checks check_admin_referer( 'pb_save' ) and current_user_can( 'unfiltered_html' ) first. Issue 2: the image importer copies a remote file into wp-content/uploads/pb/ keeping the original extension after checking only that the MIME header says image/*; the importer is reachable by users with upload_files. We host on managed hosting but I don't know their server config. Please rate both.",
+  "expected_behavior": [
+    "Treat the request as a full review with a findings report: record review context (target, immutable revision, scope, testing authorization, limitations) with unavailable values explicitly Unknown.",
+    "For issue 1, trace the save handler and recognize that only principals with unfiltered_html reach the raw-HTML write, so storing script is authority WordPress already grants them; check whether any lower-trust principal (contributor, multisite site admin without unfiltered_html) or another write path reaches the same meta before deciding.",
+    "If no lower-trust path exists, do not report issue 1 as a vulnerability: record it as rejected with the governing current_user_can( 'unfiltered_html' ) control, or as hardening at most, and give it no severity.",
+    "For issue 2, trace the importer: an author-level principal (upload_files) controls the remote file and the saved extension, and the MIME header check does not validate the extension or content, so a .php or .phtml payload can be written under uploads/.",
+    "Identify that whether the written file executes depends on the web-server handler for uploads/, which is not in the reviewed source; do not assume the host blocks or allows PHP execution there.",
+    "Record the execution result of issue 2 as needs_validation with that exact blocker and a safe validation plan (owner confirms the uploads/ handler, or reproduce on a disposable local stack with the recorded server config), assigning no severity to the unconfirmed execution claim.",
+    "Separately assess what the source alone confirms for issue 2 (an author can write an arbitrary-extension file to a web-accessible path) and rate only that demonstrated result with the severity anchors, stating the required role and conditions, without rating it as unauthenticated or confirmed RCE.",
+    "Recommend concrete fixes for issue 2: validate extension and content with wp_check_filetype_and_ext() against an allowlist, sanitize the filename, and store through wp_handle_sideload() or media_handle_sideload().",
+    "Do not copy the scanner's High ratings; justify each severity from demonstrated impact and reachability, and keep needs_validation and rejected items out of confirmed severity totals."
+  ],
+  "success_criteria": [
+    "Issue 1 is not reported as a confirmed High stored-XSS finding; the report explains that the unfiltered_html capability check limits the write to principals already trusted with raw HTML, and records it as rejected or hardening without severity unless a lower-trust path is shown.",
+    "Issue 2's code-execution claim is recorded as needs_validation with the exact server-configuration blocker and a safe validation plan, and carries no severity.",
+    "Any confirmed part of issue 2 names the lower-trust principal (upload_files), bypassed control, affected resource, and demonstrated result, with severity justified against the anchors rather than the scanner label.",
+    "The report includes concrete remediation using wp_check_filetype_and_ext() or equivalent extension-and-content validation and a WordPress sideload API.",
+    "Confirmed severity totals exclude needs_validation, rejected, and hardening items, and no live-site probing is proposed."
+  ]
+}

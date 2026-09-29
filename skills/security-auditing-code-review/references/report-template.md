@@ -32,7 +32,7 @@ perform active testing until authorization and boundaries are established.
 
 State the reviewed scope, material confirmed risks, and the bounded result. Include
 severity counts **only for confirmed vulnerabilities**, rated from demonstrated
-impact and reachability. An empty confirmed set means no vulnerability was confirmed
+impact and reachability with the [severity anchors](severity-anchors.md). An empty confirmed set means no vulnerability was confirmed
 within the recorded scope, not that the application is secure. Do not supply an
 overall “secure” score, estimated remediation hours, or response-time promises.
 Do not include CVSS/CWE values unless an actual vector/mapping and its source are
@@ -46,13 +46,16 @@ controls. Explain severity from evidence, including remaining exploit prerequisi
 ### [SEVERITY] Category — title
 
 - **Location:** Exact file and line range at the reviewed revision.
+- **Boundary:** Lower-trust principal → input or action it controls → control that
+  should stop it → affected user or resource → concrete result. If any element is
+  missing, the candidate belongs under Needs validation, not here.
 - **Evidence/data flow:** Entry point, attacker-controlled source, transformations,
   governing controls (or their absence), and sensitive sink. Include redacted code
   or a safe reproduction; distinguish static proof from runtime observations.
 - **Exploit prerequisites:** Authentication level, capabilities, nonce acquisition,
   object ownership/restrictions, configuration, and other necessary conditions.
   Unknown prerequisites stay `Unknown`; move an incomplete exploitability trace
-  to unverified leads instead of presenting it as a confirmed vulnerability.
+  to Needs validation instead of presenting it as a confirmed vulnerability.
 - **Impact:** Who can do what to which resource; justify severity without expanding
   beyond the demonstrated reachability and deployment assumptions.
 - **Remediation:** Concrete corrected code or configuration, with the appropriate
@@ -63,12 +66,29 @@ controls. Explain severity from evidence, including remaining exploit prerequisi
 - **References:** Relevant official API/security documentation and any recorded
   severity vector or classification source used.
 
-## Unverified leads
+## Needs validation
 
-List scanner hits, incomplete traces, and uncertain reachability here, with location,
-evidence obtained, missing evidence, and the next safe verification step. These are
-not confirmed findings and must not enter confirmed severity totals. Write `None`
-only if no leads remain; do not equate a scanner match with a vulnerability.
+List source-grounded hypotheses blocked by a specific missing fact, including scanner
+hits and incomplete traces. These are not confirmed findings: assign **no severity**
+and keep them out of confirmed totals. For each item record:
+
+- **Location and trace:** File and line range, and the source path established so far.
+- **Claimed root cause:** The boundary it would cross and the possible concrete result.
+- **Blocker:** The exact missing fact (for example, whether the web server executes
+  `.phtml` in `uploads/`, whether a filter in another plugin runs first, or whether the
+  site changes the default role).
+- **Validation plan:** A safe next step: a bounded check on a disposable local
+  WordPress with dummy users, and/or a configuration fact for the site owner to confirm.
+  Never propose probing a live site.
+
+Write `None` only if no items remain; do not equate a scanner match with a vulnerability.
+
+## Rejected candidates
+
+List candidates that a governing control disproves, so later reviews do not re-report
+them: location, the claim, and the control that stops it (for example,
+`current_user_can( 'manage_options' )` in the route's `permission_callback`). A missing
+fact is not a rejection; that item belongs under Needs validation. Write `None` if empty.
 
 ## Hardening recommendations
 
