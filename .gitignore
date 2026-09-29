@@ -94,3 +94,6 @@ gitleaks-report*.sarif
 docs/phase-1/
 docs/phase-2/
 docs/sample/
+
+# Third-party reference material kept locally for inspiration
+docs/inspirations/

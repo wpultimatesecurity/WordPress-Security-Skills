@@ -1,0 +1,25 @@
+{
+  "name": "Support-ticket assistant with tools, public chat, and unescaped replies",
+  "skills": [
+    "ai-llm-integration-security",
+    "rest-api-security",
+    "output-escaping"
+  ],
+  "query": "I'm adding an AI assistant to our WooCommerce support plugin. Agents (shop_manager role) open a ticket in wp-admin and click 'Draft reply'; we send the customer's ticket text and order history to the model with tools refund_order( order_id, amount ) and update_order_status( order_id, status ), then echo the model's reply into the ticket screen. We also want a public chat widget on the storefront, so I pass the OpenAI key to the widget via wp_localize_script and call the API from JavaScript. Can you implement this securely?",
+  "expected_behavior": [
+    "Identify the customer-written ticket text as a lower-trust injection source that reaches a flow with refund and status tools running under the shop manager's authority.",
+    "Remove action tools from the draft-reply flow, or make refund and status changes proposals that execute only after the agent approves the exact order and amount through a server-verified, single-use, nonce-protected confirmation.",
+    "Check capabilities inside each tool for the specific order (for example edit_shop_order for that ID) and validate arguments (order ownership, amount not above the refundable total, allowed status values).",
+    "Escape the model's reply at output with esc_html() or a strict wp_kses allowlist, and sanitize it before storing it on the ticket.",
+    "Move the provider key server-side (wp-config.php constant or encrypted option) and route the storefront chat through a REST endpoint with a nonce, message size limits, per-user/IP rate limits, and a spend cap.",
+    "Limit public chat context to published, public content; exclude order history and other customers' data unless the requester is authenticated and owns the order.",
+    "Test denied paths: an injected instruction in a ticket, a script tag in the model's reply, a customer attempting to reach tools, and a burst of anonymous chat requests."
+  ],
+  "success_criteria": [
+    "No model-initiated refund or status change executes without explicit approval of the exact action by an authorized user, verified server-side.",
+    "Each tool checks the capability for the specific order and validates its arguments.",
+    "Model output is escaped at output and sanitized before storage.",
+    "The provider key never reaches the browser, and the public chat endpoint has rate and spend limits.",
+    "Public chat cannot retrieve order data or private content for users who are not authorized to read it."
+  ]
+}

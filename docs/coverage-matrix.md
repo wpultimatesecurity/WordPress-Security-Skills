@@ -30,6 +30,7 @@ This matrix tracks public skill coverage and helps contributors propose focused 
 | Dependency and supply-chain security | Covered | `dependency-supply-chain-security` |
 | Authentication and session management | Covered | `authentication-session-security` |
 | HTTP security headers, CSP, and CORS | Covered | `security-headers-csp` |
+| AI and LLM integration | Covered | `ai-llm-integration-security` |
 
 All rows above are covered. Future candidates (propose via the issue template before
 starting work):

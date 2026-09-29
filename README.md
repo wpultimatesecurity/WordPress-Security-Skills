@@ -98,6 +98,7 @@ Each skill targets a documented failure mode in AI-generated WordPress code:
 | **dependency-supply-chain-security** | Vendors outdated libraries, enqueues unversioned CDN scripts with no integrity, or loads remotely fetched code. |
 | **authentication-session-security** | Bypasses core authentication or mishandles session revocation, password changes, and login throttling. |
 | **security-headers-csp** | Sends no security headers, ships a blanket CSP that permits everything, or reflects arbitrary `Origin` values into CORS. |
+| **ai-llm-integration-security** | Echoes model output unescaped, lets tools trust the model instead of checking capabilities, or ships the provider key to the browser. |
 
 ## The skills
 
@@ -127,6 +128,7 @@ Each skill targets a documented failure mode in AI-generated WordPress code:
 | [`wp-cli-security`](skills/wp-cli-security/) | Sanitized CLI args, prepared queries, confirmed destructive ops. |
 | [`woocommerce-security`](skills/woocommerce-security/) | WooCommerce capabilities, order/customer PII handling, tokenized payments. |
 | [`dependency-supply-chain-security`](skills/dependency-supply-chain-security/) | Vetted dependencies, `composer audit`, pinned + SRI-checked CDN assets, no runtime code loading. |
+| [`ai-llm-integration-security`](skills/ai-llm-integration-security/) | Untrusted model output, capability-bound tools and abilities, confirmed actions, server-side keys and spend caps. |
 | [`authentication-session-security`](skills/authentication-session-security/) | Core `wp_signon` flows, cookie/session lifecycle, login throttling, uniform login errors. |
 | [`security-headers-csp`](skills/security-headers-csp/) | `nosniff`, frame protection, Referrer-Policy, real CSP nonces, CORS allowlists, cookie flags. |
 
@@ -267,6 +269,14 @@ establish.
 - [WordPress Coding Standards](https://github.com/WordPress/WordPress-Coding-Standards)
 - [OWASP Top Ten](https://owasp.org/www-project-top-ten/) ·
   [OWASP Cheat Sheet Series](https://cheatsheetseries.owasp.org/)
+
+## Acknowledgments
+
+The audit verdicts, severity anchors, coverage ledger, attack classes, and full-audit
+workflow in `security-auditing-code-review`, and the AI/LLM and resource-exhaustion
+guidance, adapt ideas from Cloudflare's MIT-licensed
+[security-audit skill](https://github.com/cloudflare/security-audit-skill), rewritten
+for WordPress.
 
 ## License
 

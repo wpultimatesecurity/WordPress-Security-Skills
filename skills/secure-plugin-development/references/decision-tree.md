@@ -118,6 +118,10 @@ Apply all matching branches to the selected entry path:
   [dependency-supply-chain-security](../../dependency-supply-chain-security/SKILL.md).
   If fetched content becomes executable, treat its integrity and update trust
   chain separately from the SSRF risk of fetching it.
+- **Calls to an LLM or AI provider, model-driven tools, or Abilities/MCP exposure?**
+  Apply [ai-llm-integration-security](../../ai-llm-integration-security/SKILL.md).
+  Treat model output and prompt content as untrusted, and authorize every tool action
+  against the human user, not the model.
 
 ## Worked route
 
