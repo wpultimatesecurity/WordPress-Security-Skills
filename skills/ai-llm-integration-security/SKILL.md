@@ -7,7 +7,7 @@ description: >
   all context as untrusted, binds every tool action to the human user's capabilities,
   confirms destructive actions server-side, keeps provider keys server-side, limits
   retrieval to what the user can read, and caps operator-paid spend.
-compatibility: "Examples generally use PHP 7.4 syntax. The Abilities API requires WordPress 6.9 or later; verify ability registration arguments against the target version. Provider SDKs and the MCP adapter change quickly; check their current documentation."
+compatibility: "Examples generally use PHP 7.4 syntax. The Abilities API requires WordPress 6.9 or later (wp_register_ability() on wp_abilities_api_init, categories on wp_abilities_api_categories_init). Provider SDKs and the MCP adapter change quickly; check their current documentation."
 license: MIT
 metadata:
   tags: "wordpress, security, ai, llm, prompt-injection, abilities-api, mcp"
@@ -129,6 +129,8 @@ wp_register_ability(
 
 ```php
 // ✅ Secure: per-object capability, validated input, trash instead of force delete.
+// The 'my-plugin' category is registered first with wp_register_ability_category()
+// on the wp_abilities_api_categories_init hook.
 add_action( 'wp_abilities_api_init', function () {
     wp_register_ability(
         'my-plugin/trash-post',
