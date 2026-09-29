@@ -1,6 +1,7 @@
 # WordPress Security Skills
 
 [![Validate](https://github.com/wpultimatesecurity/WordPress-Security-Skills/actions/workflows/validate.yml/badge.svg)](https://github.com/wpultimatesecurity/WordPress-Security-Skills/actions/workflows/validate.yml)
+[![Latest release](https://img.shields.io/github/v/release/wpultimatesecurity/WordPress-Security-Skills)](https://github.com/wpultimatesecurity/WordPress-Security-Skills/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Skills: 27](https://img.shields.io/badge/skills-27-informational.svg)](#skills)
 [![Agent Skills spec](https://img.shields.io/badge/Agent%20Skills-spec-lightgrey.svg)](https://agentskills.io/specification)
